@@ -1,12 +1,6 @@
 ﻿using MunicipalServiceApp.Application.Abstractions;
 using MunicipalServiceApp.Domain;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -82,9 +76,19 @@ namespace MunicipalServiceApp.Presentation
             lblStatus.Text = "Submitting…";
             await AnimateProgressBarAsync(0, 100, 600);
 
-            lblStatus.Text = $"Issue submitted. Tracking #: {result.Value}";
-            MessageBox.Show("Your report has been logged successfully.",
-                "Submitted", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            var token = result.Value ?? "(unavailable)";
+            lblStatus.Text = $"Issue submitted. Tracking #: {token}";
+
+            // Optional convenience: copy token to clipboard.
+            try { Clipboard.SetText(token); } catch { /* ignore clipboard errors */ }
+
+            MessageBox.Show(
+                $"Your report has been logged successfully.\n\nTracking #: {token}\n\n" +
+                "The tracking number has been copied to your clipboard.",
+                "Submitted",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
 
             // Reset inputs for the next report
             txtLocation.Clear();
@@ -93,6 +97,7 @@ namespace MunicipalServiceApp.Presentation
             _attachedPath = string.Empty;
             lblAttachmentPath.Text = "No file selected";
             prgEngagement.Value = 0;
+            txtLocation.Focus();
         }
 
         private async Task AnimateProgressBarAsync(int from, int to, int durationMs)
