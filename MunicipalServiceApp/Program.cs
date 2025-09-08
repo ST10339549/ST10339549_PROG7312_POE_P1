@@ -1,6 +1,5 @@
-using System;
-using System.Windows.Forms;
 using MunicipalServiceApp.Application.Services;
+using MunicipalServiceApp.Infrastructure.Geocoding;
 using MunicipalServiceApp.Infrastructure.Repositories;
 using WinForms = System.Windows.Forms;
 
@@ -18,9 +17,10 @@ namespace MunicipalServiceApp
             Application.SetCompatibleTextRenderingDefault(false);
 #endif
             var repo = new InMemoryIssueRepository();
-            var svc  = new IssueService(repo);
+            var svc = new IssueService(repo);
+            var geo = new NominatimGeocodingService();
 
-            WinForms.Application.Run(new Presentation.MainMenuForm(svc));
+            WinForms.Application.Run(new Presentation.MainMenuForm(svc, geo));
         }
     }
 }

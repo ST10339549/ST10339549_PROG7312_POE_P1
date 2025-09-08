@@ -9,13 +9,16 @@ namespace MunicipalServiceApp.Presentation
     public partial class ReportIssuesForm : Form
     {
         private readonly IIssueService _issueService;
+        private readonly IGeocodingService _geo;
         private string _attachedPath = string.Empty;
 
-        public ReportIssuesForm() : this(null!) { }
+        public ReportIssuesForm() : this(null!, null!) { }
 
-        public ReportIssuesForm(IIssueService issueService)
+        public ReportIssuesForm(IIssueService issueService, IGeocodingService geo)
         {
             _issueService = issueService ?? throw new ArgumentNullException(nameof(issueService));
+            _geo = geo ?? throw new ArgumentNullException(nameof(geo));
+
             InitializeComponent();
             Text = "Report Issues";
             StartPosition = FormStartPosition.CenterScreen;
@@ -23,17 +26,7 @@ namespace MunicipalServiceApp.Presentation
 
         private void ReportIssuesForm_Load(object? sender, EventArgs e)
         {
-            cmbCategory.DataSource = null;
-
-            // Fill from the custom Categories.All() enumerator
-            cmbCategory.Items.Clear();
-            foreach (var c in Domain.Categories.All())
-                cmbCategory.Items.Add(c);
-
-            cmbCategory.DropDownStyle = ComboBoxStyle.DropDownList;
-
-            if (cmbCategory.Items.Count > 0)
-                cmbCategory.SelectedIndex = 0;
+            PopulateCategories();
 
             lblStatus.Text = "Awaiting submission…";
             prgEngagement.Minimum = 0;
@@ -41,6 +34,19 @@ namespace MunicipalServiceApp.Presentation
             prgEngagement.Value = 0;
 
             lblAttachmentPath.Text = "No file selected";
+        }
+
+        private void PopulateCategories()
+        {
+            cmbCategory.DataSource = null;
+            cmbCategory.Items.Clear();
+
+            foreach (var c in Domain.Categories.All())
+                cmbCategory.Items.Add(c);
+
+            cmbCategory.DropDownStyle = ComboBoxStyle.DropDownList;
+            if (cmbCategory.Items.Count > 0)
+                cmbCategory.SelectedIndex = 0;
         }
 
         private void btnAttach_Click(object? sender, EventArgs e)
@@ -58,19 +64,35 @@ namespace MunicipalServiceApp.Presentation
             }
         }
 
+        // Address validation (geocoding) happens BEFORE saving
         private async void btnSubmit_Click(object? sender, EventArgs e)
         {
+            prgEngagement.Value = 0;
+            lblStatus.Text = "Validating address…";
+
+            var rawAddress = txtLocation.Text?.Trim() ?? string.Empty;
+            var addr = await _geo.ValidateAsync(rawAddress);
+            if (!addr.Success)
+            {
+                MessageBox.Show(addr.ErrorMessage, "Invalid Address",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                lblStatus.Text = "Awaiting submission…";
+                txtLocation.Focus();
+                return;
+            }
+
+            // Build the issue with normalized address + coords
             var issue = new Issue
             {
-                Location = txtLocation.Text?.Trim() ?? string.Empty,
+                Location = addr.NormalizedAddress,
+                Latitude = addr.Latitude,
+                Longitude = addr.Longitude,
                 Category = cmbCategory.SelectedItem?.ToString() ?? string.Empty,
                 Description = rtbDescription.Text?.Trim() ?? string.Empty,
                 AttachmentPath = _attachedPath
             };
 
-            prgEngagement.Value = 0;
             lblStatus.Text = "Validating…";
-
             var result = _issueService.CreateIssue(issue);
             if (!result.Success)
             {
@@ -86,7 +108,6 @@ namespace MunicipalServiceApp.Presentation
             var token = result.Value ?? "(unavailable)";
             lblStatus.Text = $"Issue submitted. Tracking #: {token}";
 
-            // Copy token to clipboard.
             try { Clipboard.SetText(token); } catch { /* ignore clipboard errors */ }
 
             MessageBox.Show(

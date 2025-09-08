@@ -1,12 +1,5 @@
 ﻿using MunicipalServiceApp.Application.Abstractions;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace MunicipalServiceApp.Presentation
@@ -14,13 +7,15 @@ namespace MunicipalServiceApp.Presentation
     public partial class MainMenuForm : Form
     {
         private readonly IIssueService _issueService;
+        private readonly IGeocodingService _geo;
 
-        // Designer-friendly parameterless constructor (for VS Designer)
-        public MainMenuForm() : this(null!) { }
+        public MainMenuForm() : this(null!, null!) { }
 
-        public MainMenuForm(IIssueService issueService)
+        public MainMenuForm(IIssueService issueService, IGeocodingService geo)
         {
             _issueService = issueService ?? throw new ArgumentNullException(nameof(issueService));
+            _geo = geo ?? throw new ArgumentNullException(nameof(geo));
+
             InitializeComponent();
             Text = "Municipal Services - Main Menu";
             StartPosition = FormStartPosition.CenterScreen;
@@ -28,12 +23,12 @@ namespace MunicipalServiceApp.Presentation
 
         private void MainMenuForm_Load(object? sender, EventArgs e)
         {
-            // Nothing yet
+            // styling or layout hooks if needed
         }
 
         private void btnReportIssues_Click(object? sender, EventArgs e)
         {
-            using var frm = new ReportIssuesForm(_issueService);
+            using var frm = new ReportIssuesForm(_issueService, _geo);
             Hide();
             frm.ShowDialog(this);
             Show();
