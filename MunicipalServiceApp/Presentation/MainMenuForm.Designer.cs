@@ -1,4 +1,9 @@
-﻿namespace MunicipalServiceApp.Presentation
+﻿using System;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Windows.Forms;
+
+namespace MunicipalServiceApp.Presentation
 {
     partial class MainMenuForm
     {
@@ -20,197 +25,194 @@
         {
             components = new System.ComponentModel.Container();
 
-            // --- Header banner ---
+            // ===== Header =====
             header = new Panel
             {
-                Height = 100,
+                Height = 110,
                 Dock = DockStyle.Top,
-                BackColor = System.Drawing.Color.FromArgb(92, 71, 173)
+                BackColor = Color.FromArgb(92, 71, 173),
+                Padding = new Padding(24, 16, 24, 18)
+            };
+
+            var headerStack = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                BackColor = Color.Transparent
             };
 
             lblTitle = new Label
             {
                 Text = "Municipal Services",
-                ForeColor = System.Drawing.Color.White,
+                ForeColor = Color.White,
                 AutoSize = true,
-                Font = new System.Drawing.Font("Segoe UI Semibold", 22f),
-                Left = 24,
-                Top = 20
+                Font = new Font("Segoe UI Semibold", 22f),
+                Margin = new Padding(0, 0, 0, 2)
             };
 
             lblSub = new Label
             {
                 Text = "Report issues • Discover local events • Track service requests",
-                ForeColor = System.Drawing.Color.White,
+                ForeColor = Color.White,
                 AutoSize = true,
-                Font = new System.Drawing.Font("Segoe UI", 11f),
-                Left = 26,
-                Top = 62
+                Font = new Font("Segoe UI", 11f),
+                Margin = new Padding(0)
             };
 
-            header.Controls.Add(lblTitle);
-            header.Controls.Add(lblSub);
+            headerStack.Controls.Add(lblTitle);
+            headerStack.Controls.Add(lblSub);
+            header.Controls.Add(headerStack);
             Controls.Add(header);
 
-            // --- Centered content area ---
+            // ===== Centered content area =====
             pnlMenu = new Panel
             {
-                Width = 820,
-                Height = 300
+                Width = 860,
+                Height = 260,
+                BackColor = Color.Transparent
             };
             Controls.Add(pnlMenu);
 
-            // --- Card 1: Report Issues ---
-            var card1 = new Panel
+            // helper to make a rounded "card" with an icon
+            Panel MakeCard(string title, string body, Icon icon, EventHandler onClick, bool enabled = true)
             {
-                Width = 250,
-                Height = 220,
-                Left = 10,
-                Top = 30,
-                BackColor = System.Drawing.Color.White,
-                BorderStyle = BorderStyle.FixedSingle
-            };
-            var lblH1 = new Label
-            {
-                Text = "Report Issues",
-                Font = new System.Drawing.Font("Segoe UI Semibold", 14f),
-                AutoSize = false,
-                Width = 230,
-                Left = 10,
-                Top = 12
-            };
-            var lblB1 = new Label
-            {
-                Text = "Log potholes, water leaks, streetlights and more.\nVerified addresses using maps.",
-                Font = new System.Drawing.Font("Segoe UI", 9.25f),
-                AutoSize = false,
-                Width = 230,
-                Height = 110,
-                Left = 10,
-                Top = 46
-            };
-            btnOpenReport = new Button
-            {
-                Text = "Open",
-                Width = 100,
-                Height = 34,
-                Left = 10,
-                Top = 165
-            };
-            btnOpenReport.Click += btnReportIssues_Click;
-            card1.Controls.Add(lblH1);
-            card1.Controls.Add(lblB1);
-            card1.Controls.Add(btnOpenReport);
+                var card = new Panel
+                {
+                    Width = 260,
+                    Height = 220,
+                    BackColor = Color.White,
+                    Padding = new Padding(16),
+                };
 
-            // --- Card 2: Local Events (disabled for Part 1) ---
-            var card2 = new Panel
-            {
-                Width = 250,
-                Height = 220,
-                Left = 285,
-                Top = 30,
-                BackColor = System.Drawing.Color.White,
-                BorderStyle = BorderStyle.FixedSingle
-            };
-            var lblH2 = new Label
-            {
-                Text = "Local Events (Part 2)",
-                Font = new System.Drawing.Font("Segoe UI Semibold", 14f),
-                AutoSize = false,
-                Width = 230,
-                Left = 10,
-                Top = 12
-            };
-            var lblB2 = new Label
-            {
-                Text = "Browse community events and announcements.\nComing soon.",
-                Font = new System.Drawing.Font("Segoe UI", 9.25f),
-                AutoSize = false,
-                Width = 230,
-                Height = 110,
-                Left = 10,
-                Top = 46
-            };
-            var btn2 = new Button
-            {
-                Text = "Open",
-                Width = 100,
-                Height = 34,
-                Left = 10,
-                Top = 165,
-                Enabled = false
-            };
-            card2.Controls.Add(lblH2);
-            card2.Controls.Add(lblB2);
-            card2.Controls.Add(btn2);
+                var pic = new PictureBox
+                {
+                    Image = icon.ToBitmap(),
+                    SizeMode = PictureBoxSizeMode.Zoom,
+                    Size = new Size(28, 28),
+                    Location = new Point(16, 14)
+                };
 
-            // --- Card 3: Service Request Status (disabled for Part 1) ---
-            var card3 = new Panel
-            {
-                Width = 250,
-                Height = 220,
-                Left = 560,
-                Top = 30,
-                BackColor = System.Drawing.Color.White,
-                BorderStyle = BorderStyle.FixedSingle
-            };
-            var lblH3 = new Label
-            {
-                Text = "Service Request Status (Part 3)",
-                Font = new System.Drawing.Font("Segoe UI Semibold", 14f),
-                AutoSize = false,
-                Width = 230,
-                Left = 10,
-                Top = 12
-            };
-            var lblB3 = new Label
-            {
-                Text = "Track the progress of your submitted requests.\nComing soon.",
-                Font = new System.Drawing.Font("Segoe UI", 9.25f),
-                AutoSize = false,
-                Width = 230,
-                Height = 110,
-                Left = 10,
-                Top = 46
-            };
-            var btn3 = new Button
-            {
-                Text = "Open",
-                Width = 100,
-                Height = 34,
-                Left = 10,
-                Top = 165,
-                Enabled = false
-            };
-            card3.Controls.Add(lblH3);
-            card3.Controls.Add(lblB3);
-            card3.Controls.Add(btn3);
+                var lblH = new Label
+                {
+                    Text = title,
+                    Font = new Font("Segoe UI Semibold", 13.5f),
+                    AutoSize = false,
+                    Location = new Point(16 + 34, 12),
+                    Size = new Size(260 - 16 - 34 - 16, 30)
+                };
 
+                var lblB = new Label
+                {
+                    Text = body,
+                    Font = new Font("Segoe UI", 9.25f),
+                    AutoSize = false,
+                    Location = new Point(16, 52),
+                    Size = new Size(260 - 32, 100)
+                };
+
+                var btn = new Button
+                {
+                    Text = "Open",
+                    Image = SystemIcons.Information.ToBitmap(),
+                    ImageAlign = ContentAlignment.MiddleLeft,
+                    TextImageRelation = TextImageRelation.ImageBeforeText,
+                    Width = 112,
+                    Height = 36,
+                    Location = new Point(16, 150),
+                    FlatStyle = FlatStyle.Flat,
+                    Enabled = enabled,
+                    BackColor = enabled ? Color.FromArgb(92, 71, 173) : SystemColors.Control,
+                    ForeColor = enabled ? Color.White : SystemColors.ControlText
+                };
+                btn.FlatAppearance.BorderSize = 0;
+                btn.Click += onClick;
+
+                card.Controls.Add(pic);
+                card.Controls.Add(lblH);
+                card.Controls.Add(lblB);
+                card.Controls.Add(btn);
+
+                // rounded corners
+                UiKit.Round(card, 16);
+                UiKit.Round(btn, 18);
+
+                return card;
+            }
+
+            // Three cards
+            var card1 = MakeCard(
+                "Report Issues",
+                "Log potholes, water leaks, streetlights and more.\nVerified addresses using maps.",
+                SystemIcons.Warning,
+                btnReportIssues_Click,
+                enabled: true);
+
+            var card2 = MakeCard(
+                "Local Events (Part 2)",
+                "Browse community events and announcements.\nComing soon.",
+                SystemIcons.Asterisk,
+                (_, __) => { },
+                enabled: false);
+
+            var card3 = MakeCard(
+                "Service Request Status (Part 3)",
+                "Track the progress of your submitted requests.\nComing soon.",
+                SystemIcons.Question,
+                (_, __) => { },
+                enabled: false);
+
+            // layout cards
+            card1.Location = new Point(10, 20);
+            card2.Location = new Point(card1.Right + 20, 20);
+            card3.Location = new Point(card2.Right + 20, 20);
             pnlMenu.Controls.Add(card1);
             pnlMenu.Controls.Add(card2);
             pnlMenu.Controls.Add(card3);
 
-            // --- Form properties ---
-            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            // ===== Form =====
+            AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(980, 560);
-            Name = "MainMenuForm";
+            ClientSize = new Size(980, 560);
+            BackColor = Color.FromArgb(247, 248, 250);
             Text = "Main Menu";
+            MinimumSize = new Size(900, 560);
 
-            // Center pnlMenu on load & resize
-            Load += MainMenuForm_Load;
+            // center the menu panel
             Resize += (_, __) =>
             {
-                pnlMenu.Left = System.Math.Max(0, (ClientSize.Width - pnlMenu.Width) / 2);
-                pnlMenu.Top = System.Math.Max(header.Bottom + 16, (ClientSize.Height - pnlMenu.Height) / 2);
+                pnlMenu.Left = Math.Max(0, (ClientSize.Width - pnlMenu.Width) / 2);
+                pnlMenu.Top = Math.Max(header.Bottom + 16, (ClientSize.Height - pnlMenu.Height) / 2);
             };
             Shown += (_, __) =>
             {
-                this.ResizeRedraw = true;
-                // trigger initial centering
-                pnlMenu.Left = System.Math.Max(0, (ClientSize.Width - pnlMenu.Width) / 2);
-                pnlMenu.Top = System.Math.Max(header.Bottom + 16, (ClientSize.Height - pnlMenu.Height) / 2);
+                pnlMenu.Left = Math.Max(0, (ClientSize.Width - pnlMenu.Width) / 2);
+                pnlMenu.Top = Math.Max(header.Bottom + 16, (ClientSize.Height - pnlMenu.Height) / 2);
             };
+        }
+
+        private static class UiKit
+        {
+            public static void Round(Control c, int radius)
+            {
+                void apply(object? _ = null, EventArgs? __ = null)
+                {
+                    using var path = new GraphicsPath();
+                    var r = radius * 2;
+                    var rect = new Rectangle(0, 0, c.Width, c.Height);
+                    path.AddArc(rect.X, rect.Y, r, r, 180, 90);
+                    path.AddArc(rect.Right - r, rect.Y, r, r, 270, 90);
+                    path.AddArc(rect.Right - r, rect.Bottom - r, r, r, 0, 90);
+                    path.AddArc(rect.X, rect.Bottom - r, r, r, 90, 90);
+                    path.CloseAllFigures();
+                    c.Region = new Region(path);
+                }
+
+                c.SizeChanged += apply;
+                if (c.Width > 0 && c.Height > 0) apply();
+            }
         }
     }
 }

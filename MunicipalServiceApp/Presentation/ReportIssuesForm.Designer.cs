@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
 namespace MunicipalServiceApp.Presentation
@@ -96,20 +97,20 @@ namespace MunicipalServiceApp.Presentation
                 AutoScroll = true
             };
 
-            // ===== Card (fixed working width, grows vertically) =====
+            // ===== Card (rounded, fixed working width) =====
             pnlCard = new Panel
             {
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 Padding = new Padding(24),
                 BackColor = Color.White,
-                BorderStyle = BorderStyle.FixedSingle,
                 MinimumSize = new Size(860, 0),
                 Width = 860
             };
             body.Controls.Add(pnlCard);
+            UiKit.Round(pnlCard, 18);
 
-            // Center the card in the body area
+            // Center card horizontally
             void Recenter(object? _, EventArgs __)
             {
                 var x = Math.Max(0, (body.ClientSize.Width - pnlCard.Width) / 2);
@@ -119,7 +120,7 @@ namespace MunicipalServiceApp.Presentation
             pnlCard.SizeChanged += Recenter;
             Shown += Recenter;
 
-            // ===== Grid inside the card =====
+            // ===== Grid =====
             grid = new TableLayoutPanel
             {
                 Dock = DockStyle.Top,
@@ -129,31 +130,43 @@ namespace MunicipalServiceApp.Presentation
                 Padding = new Padding(8),
                 MinimumSize = new Size(860 - (24 * 2), 0)
             };
-            // Absolute label column + flexible input column
             grid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 220f));
             grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-
-            // Row sizing so layout has height from first pass
-            grid.RowStyles.Add(new RowStyle(SizeType.AutoSize));        // 0 heading
+            grid.RowStyles.Add(new RowStyle(SizeType.AutoSize));        // 0 heading row
             grid.RowStyles.Add(new RowStyle(SizeType.AutoSize));        // 1 location
             grid.RowStyles.Add(new RowStyle(SizeType.AutoSize));        // 2 category
             grid.RowStyles.Add(new RowStyle(SizeType.Absolute, 150f));  // 3 description
             grid.RowStyles.Add(new RowStyle(SizeType.AutoSize));        // 4 attach
             grid.RowStyles.Add(new RowStyle(SizeType.AutoSize));        // 5 status
             grid.RowStyles.Add(new RowStyle(SizeType.AutoSize));        // 6 buttons
-
             pnlCard.Controls.Add(grid);
 
-            // Heading
+            // Heading with icon (span 2)
+            var headingRow = new FlowLayoutPanel
+            {
+                FlowDirection = FlowDirection.LeftToRight,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                WrapContents = false,
+                Margin = new Padding(0, 0, 0, 12)
+            };
+            var picHead = new PictureBox
+            {
+                Image = SystemIcons.Warning.ToBitmap(),
+                SizeMode = PictureBoxSizeMode.Zoom,
+                Size = new Size(26, 26),
+                Margin = new Padding(0, 2, 8, 0)
+            };
             lblHeading = new Label
             {
                 Text = "Report an Issue",
                 Font = new Font("Segoe UI Semibold", 14f),
-                AutoSize = true,
-                Margin = new Padding(0, 0, 0, 12)
+                AutoSize = true
             };
-            grid.Controls.Add(lblHeading, 0, 0);
-            grid.SetColumnSpan(lblHeading, 2);
+            headingRow.Controls.Add(picHead);
+            headingRow.Controls.Add(lblHeading);
+            grid.Controls.Add(headingRow, 0, 0);
+            grid.SetColumnSpan(headingRow, 2);
 
             // Location
             lblLocation = new Label
@@ -220,9 +233,15 @@ namespace MunicipalServiceApp.Presentation
             btnAttach = new Button
             {
                 Text = "Attach Photo/Doc…",
+                Image = SystemIcons.Application.ToBitmap(),
+                TextImageRelation = TextImageRelation.ImageBeforeText,
+                ImageAlign = ContentAlignment.MiddleLeft,
                 AutoSize = true,
-                Margin = new Padding(0, 0, 12, 0)
+                Margin = new Padding(0, 0, 12, 0),
+                FlatStyle = FlatStyle.Flat
             };
+            btnAttach.FlatAppearance.BorderSize = 0;
+            UiKit.Round(btnAttach, 18);
             btnAttach.Click += btnAttach_Click;
 
             lblAttachmentPath = new Label
@@ -269,7 +288,7 @@ namespace MunicipalServiceApp.Presentation
             grid.Controls.Add(statusRow, 0, 5);
             grid.SetColumnSpan(statusRow, 2);
 
-            // Buttons
+            // Buttons (rounded)
             flButtons = new FlowLayoutPanel
             {
                 FlowDirection = FlowDirection.RightToLeft,
@@ -283,19 +302,33 @@ namespace MunicipalServiceApp.Presentation
             btnSubmit = new Button
             {
                 Text = "Submit",
-                Width = 120,
+                Image = SystemIcons.Shield.ToBitmap(),
+                TextImageRelation = TextImageRelation.ImageBeforeText,
+                ImageAlign = ContentAlignment.MiddleLeft,
+                Width = 130,
                 Height = 36,
-                Margin = new Padding(6, 0, 0, 0)
+                Margin = new Padding(6, 0, 0, 0),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(92, 71, 173),
+                ForeColor = Color.White
             };
+            btnSubmit.FlatAppearance.BorderSize = 0;
+            UiKit.Round(btnSubmit, 18);
             btnSubmit.Click += btnSubmit_Click;
 
             btnBack = new Button
             {
                 Text = "Back to Main Menu",
-                Width = 160,
+                Image = SystemIcons.Hand.ToBitmap(),
+                TextImageRelation = TextImageRelation.ImageBeforeText,
+                ImageAlign = ContentAlignment.MiddleLeft,
+                Width = 170,
                 Height = 36,
-                Margin = new Padding(6, 0, 0, 0)
+                Margin = new Padding(6, 0, 0, 0),
+                FlatStyle = FlatStyle.Flat
             };
+            btnBack.FlatAppearance.BorderSize = 0;
+            UiKit.Round(btnBack, 18);
             btnBack.Click += btnBack_Click;
 
             flButtons.Controls.Add(btnSubmit);
@@ -314,10 +347,31 @@ namespace MunicipalServiceApp.Presentation
             Controls.Add(body);
             Controls.Add(header);
 
-            // code-behind loader (fills categories, etc.)
             Load += ReportIssuesForm_Load;
 
             ResumeLayout(false);
+        }
+
+        private static class UiKit
+        {
+            public static void Round(Control c, int radius)
+            {
+                void apply(object? _ = null, EventArgs? __ = null)
+                {
+                    if (c.Width <= 0 || c.Height <= 0) return;
+                    using var path = new GraphicsPath();
+                    var r = radius * 2;
+                    var rect = new Rectangle(0, 0, c.Width, c.Height);
+                    path.AddArc(rect.X, rect.Y, r, r, 180, 90);
+                    path.AddArc(rect.Right - r, rect.Y, r, r, 270, 90);
+                    path.AddArc(rect.Right - r, rect.Bottom - r, r, r, 0, 90);
+                    path.AddArc(rect.X, rect.Bottom - r, r, r, 90, 90);
+                    path.CloseAllFigures();
+                    c.Region = new Region(path);
+                }
+                c.SizeChanged += apply;
+                if (c.Width > 0 && c.Height > 0) apply();
+            }
         }
     }
 }
