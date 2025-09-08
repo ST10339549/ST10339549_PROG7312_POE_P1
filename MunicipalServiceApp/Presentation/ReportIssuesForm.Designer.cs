@@ -1,8 +1,24 @@
-﻿namespace MunicipalServiceApp.Presentation
+﻿using System;
+using System.Drawing;
+using System.Windows.Forms;
+
+namespace MunicipalServiceApp.Presentation
 {
     partial class ReportIssuesForm
     {
         private System.ComponentModel.IContainer? components = null;
+
+        // Header
+        private Panel header = null!;
+        private Label lblBannerTitle = null!;
+        private Label lblBannerSub = null!;
+
+        // Body / centering
+        private Panel body = null!;
+        private Panel pnlCard = null!;
+        private TableLayoutPanel grid = null!;
+
+        // Controls used by the code-behind
         private Label lblHeading = null!;
         private Label lblLocation = null!;
         private TextBox txtLocation = null!;
@@ -10,12 +26,15 @@
         private ComboBox cmbCategory = null!;
         private Label lblDescription = null!;
         private RichTextBox rtbDescription = null!;
+        private TableLayoutPanel attachRow = null!;
         private Button btnAttach = null!;
         private Label lblAttachmentPath = null!;
+        private TableLayoutPanel statusRow = null!;
+        private Label lblStatus = null!;
+        private ProgressBar prgEngagement = null!;
+        private FlowLayoutPanel flButtons = null!;
         private Button btnSubmit = null!;
         private Button btnBack = null!;
-        private ProgressBar prgEngagement = null!;
-        private Label lblStatus = null!;
 
         protected override void Dispose(bool disposing)
         {
@@ -26,102 +45,279 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
+            SuspendLayout();
 
-            lblHeading = new Label();
-            lblLocation = new Label();
-            txtLocation = new TextBox();
-            lblCategory = new Label();
-            cmbCategory = new ComboBox();
-            lblDescription = new Label();
-            rtbDescription = new RichTextBox();
-            btnAttach = new Button();
-            lblAttachmentPath = new Label();
-            btnSubmit = new Button();
-            btnBack = new Button();
-            prgEngagement = new ProgressBar();
-            lblStatus = new Label();
+            // ===== Header =====
+            header = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 110,
+                BackColor = Color.FromArgb(92, 71, 173),
+                Padding = new Padding(24, 16, 24, 18)
+            };
+
+            var headerStack = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                BackColor = Color.Transparent
+            };
+
+            lblBannerTitle = new Label
+            {
+                Text = "Municipal Services",
+                ForeColor = Color.White,
+                AutoSize = true,
+                Font = new Font("Segoe UI Semibold", 22f),
+                Margin = new Padding(0, 0, 0, 2)
+            };
+
+            lblBannerSub = new Label
+            {
+                Text = "Report issues • Discover local events • Track service requests",
+                ForeColor = Color.White,
+                AutoSize = true,
+                Font = new Font("Segoe UI", 11f),
+                Margin = new Padding(0)
+            };
+
+            headerStack.Controls.Add(lblBannerTitle);
+            headerStack.Controls.Add(lblBannerSub);
+            header.Controls.Add(headerStack);
+
+            // ===== Body (scroll host) =====
+            body = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Color.FromArgb(247, 248, 250),
+                AutoScroll = true
+            };
+
+            // ===== Card (fixed working width, grows vertically) =====
+            pnlCard = new Panel
+            {
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Padding = new Padding(24),
+                BackColor = Color.White,
+                BorderStyle = BorderStyle.FixedSingle,
+                MinimumSize = new Size(860, 0),
+                Width = 860
+            };
+            body.Controls.Add(pnlCard);
+
+            // Center the card in the body area
+            void Recenter(object? _, EventArgs __)
+            {
+                var x = Math.Max(0, (body.ClientSize.Width - pnlCard.Width) / 2);
+                pnlCard.Location = new Point(x, 16);
+            }
+            body.Resize += Recenter;
+            pnlCard.SizeChanged += Recenter;
+            Shown += Recenter;
+
+            // ===== Grid inside the card =====
+            grid = new TableLayoutPanel
+            {
+                Dock = DockStyle.Top,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                ColumnCount = 2,
+                Padding = new Padding(8),
+                MinimumSize = new Size(860 - (24 * 2), 0)
+            };
+            // Absolute label column + flexible input column
+            grid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 220f));
+            grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+
+            // Row sizing so layout has height from first pass
+            grid.RowStyles.Add(new RowStyle(SizeType.AutoSize));        // 0 heading
+            grid.RowStyles.Add(new RowStyle(SizeType.AutoSize));        // 1 location
+            grid.RowStyles.Add(new RowStyle(SizeType.AutoSize));        // 2 category
+            grid.RowStyles.Add(new RowStyle(SizeType.Absolute, 150f));  // 3 description
+            grid.RowStyles.Add(new RowStyle(SizeType.AutoSize));        // 4 attach
+            grid.RowStyles.Add(new RowStyle(SizeType.AutoSize));        // 5 status
+            grid.RowStyles.Add(new RowStyle(SizeType.AutoSize));        // 6 buttons
+
+            pnlCard.Controls.Add(grid);
 
             // Heading
-            lblHeading.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
-            lblHeading.Location = new Point(20, 15);
-            lblHeading.Name = "lblHeading";
-            lblHeading.Size = new Size(400, 32);
-            lblHeading.Text = "Report an Issue";
+            lblHeading = new Label
+            {
+                Text = "Report an Issue",
+                Font = new Font("Segoe UI Semibold", 14f),
+                AutoSize = true,
+                Margin = new Padding(0, 0, 0, 12)
+            };
+            grid.Controls.Add(lblHeading, 0, 0);
+            grid.SetColumnSpan(lblHeading, 2);
 
             // Location
-            lblLocation.Location = new Point(22, 60);
-            lblLocation.Size = new Size(120, 23);
-            lblLocation.Text = "Location";
-            txtLocation.Location = new Point(25, 82);
-            txtLocation.Name = "txtLocation";
-            txtLocation.Size = new Size(430, 27);
+            lblLocation = new Label
+            {
+                Text = "Location (validated address)",
+                AutoSize = true,
+                Anchor = AnchorStyles.Left,
+                Margin = new Padding(0, 4, 12, 4)
+            };
+            txtLocation = new TextBox
+            {
+                Anchor = AnchorStyles.Left | AnchorStyles.Right,
+                Margin = new Padding(0, 0, 0, 8)
+            };
+            grid.Controls.Add(lblLocation, 0, 1);
+            grid.Controls.Add(txtLocation, 1, 1);
 
             // Category
-            lblCategory.Location = new Point(22, 118);
-            lblCategory.Size = new Size(120, 23);
-            lblCategory.Text = "Category";
-            cmbCategory.Location = new Point(25, 140);
-            cmbCategory.Size = new Size(430, 28);
-            cmbCategory.DropDownStyle = ComboBoxStyle.DropDownList;
+            lblCategory = new Label
+            {
+                Text = "Category",
+                AutoSize = true,
+                Anchor = AnchorStyles.Left,
+                Margin = new Padding(0, 4, 12, 4)
+            };
+            cmbCategory = new ComboBox
+            {
+                Anchor = AnchorStyles.Left | AnchorStyles.Right,
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Margin = new Padding(0, 0, 0, 8)
+            };
+            grid.Controls.Add(lblCategory, 0, 2);
+            grid.Controls.Add(cmbCategory, 1, 2);
 
             // Description
-            lblDescription.Location = new Point(22, 176);
-            lblDescription.Size = new Size(120, 23);
-            lblDescription.Text = "Description";
-            rtbDescription.Location = new Point(25, 198);
-            rtbDescription.Size = new Size(430, 120);
+            lblDescription = new Label
+            {
+                Text = "Description",
+                AutoSize = true,
+                Anchor = AnchorStyles.Left,
+                Margin = new Padding(0, 4, 12, 4)
+            };
+            rtbDescription = new RichTextBox
+            {
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
+                Height = 150,
+                Margin = new Padding(0, 0, 0, 10)
+            };
+            grid.Controls.Add(lblDescription, 0, 3);
+            grid.Controls.Add(rtbDescription, 1, 3);
 
-            // Attach
-            btnAttach.Location = new Point(25, 330);
-            btnAttach.Size = new Size(170, 34);
-            btnAttach.Text = "Attach Photo/Doc…";
-            btnAttach.UseVisualStyleBackColor = true;
+            // Attach row
+            attachRow = new TableLayoutPanel
+            {
+                ColumnCount = 2,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Dock = DockStyle.Top,
+                Margin = new Padding(0, 0, 0, 6)
+            };
+            attachRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            attachRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+
+            btnAttach = new Button
+            {
+                Text = "Attach Photo/Doc…",
+                AutoSize = true,
+                Margin = new Padding(0, 0, 12, 0)
+            };
             btnAttach.Click += btnAttach_Click;
 
-            lblAttachmentPath.Location = new Point(205, 336);
-            lblAttachmentPath.AutoSize = true;
-            lblAttachmentPath.Text = "No file selected";
+            lblAttachmentPath = new Label
+            {
+                Text = "No file selected",
+                AutoSize = true,
+                Anchor = AnchorStyles.Left
+            };
 
-            // Status + Progress
-            lblStatus.Location = new Point(25, 368);
-            lblStatus.AutoSize = true;
-            lblStatus.Text = "Awaiting submission…";
+            attachRow.Controls.Add(btnAttach, 0, 0);
+            attachRow.Controls.Add(lblAttachmentPath, 1, 0);
+            grid.Controls.Add(attachRow, 0, 4);
+            grid.SetColumnSpan(attachRow, 2);
 
-            prgEngagement.Location = new Point(25, 388);
-            prgEngagement.Size = new Size(430, 20);
-            prgEngagement.Minimum = 0;
-            prgEngagement.Maximum = 100;
-            prgEngagement.Value = 0;
+            // Status row
+            statusRow = new TableLayoutPanel
+            {
+                ColumnCount = 1,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Dock = DockStyle.Top,
+                Margin = new Padding(0, 2, 0, 0)
+            };
+            statusRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+
+            lblStatus = new Label
+            {
+                Text = "Awaiting submission…",
+                AutoSize = true,
+                Margin = new Padding(0, 0, 0, 2)
+            };
+
+            prgEngagement = new ProgressBar
+            {
+                Minimum = 0,
+                Maximum = 100,
+                Value = 0,
+                Height = 16,
+                Dock = DockStyle.Top
+            };
+
+            statusRow.Controls.Add(lblStatus, 0, 0);
+            statusRow.Controls.Add(prgEngagement, 0, 1);
+            grid.Controls.Add(statusRow, 0, 5);
+            grid.SetColumnSpan(statusRow, 2);
 
             // Buttons
-            btnBack.Location = new Point(25, 420);
-            btnBack.Size = new Size(170, 36);
-            btnBack.Text = "Back to Main Menu";
-            btnBack.UseVisualStyleBackColor = true;
-            btnBack.Click += btnBack_Click;
+            flButtons = new FlowLayoutPanel
+            {
+                FlowDirection = FlowDirection.RightToLeft,
+                Dock = DockStyle.Top,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Margin = new Padding(0, 8, 0, 0),
+                WrapContents = false
+            };
 
-            btnSubmit.Location = new Point(285, 420);
-            btnSubmit.Size = new Size(170, 36);
-            btnSubmit.Text = "Submit";
-            btnSubmit.UseVisualStyleBackColor = true;
+            btnSubmit = new Button
+            {
+                Text = "Submit",
+                Width = 120,
+                Height = 36,
+                Margin = new Padding(6, 0, 0, 0)
+            };
             btnSubmit.Click += btnSubmit_Click;
 
-            // Form
-            AutoScaleDimensions = new SizeF(7F, 15F);
-            ClientSize = new Size(484, 481);
-            Controls.AddRange(new Control[]
+            btnBack = new Button
             {
-                lblHeading,
-                lblLocation, txtLocation,
-                lblCategory, cmbCategory,
-                lblDescription, rtbDescription,
-                btnAttach, lblAttachmentPath,
-                lblStatus, prgEngagement,
-                btnBack, btnSubmit
-            });
-            Name = "ReportIssuesForm";
+                Text = "Back to Main Menu",
+                Width = 160,
+                Height = 36,
+                Margin = new Padding(6, 0, 0, 0)
+            };
+            btnBack.Click += btnBack_Click;
+
+            flButtons.Controls.Add(btnSubmit);
+            flButtons.Controls.Add(btnBack);
+            grid.Controls.Add(flButtons, 0, 6);
+            grid.SetColumnSpan(flButtons, 2);
+
+            // ===== Form =====
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            BackColor = Color.FromArgb(247, 248, 250);
+            MinimumSize = new Size(900, 620);
+            StartPosition = FormStartPosition.CenterScreen;
             Text = "Report Issues";
+
+            Controls.Add(body);
+            Controls.Add(header);
+
+            // code-behind loader (fills categories, etc.)
             Load += ReportIssuesForm_Load;
+
+            ResumeLayout(false);
         }
     }
 }
