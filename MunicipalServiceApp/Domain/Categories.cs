@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MunicipalServiceApp.Domain.DataStructures;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,13 +9,20 @@ namespace MunicipalServiceApp.Domain
 {
     public static class Categories
     {
-        public static readonly string[] All =
+        private static readonly SimpleSet<string> _set = new();
+
+        static Categories()
         {
-            "Roads",
-            "Sanitation",
-            "Utilities (Water/Electricity)",
-            "Parks & Recreation",
-            "Public Safety"
-        };
+            _set.Add("Roads");
+            _set.Add("Sanitation");
+            _set.Add("Utilities");
+            _set.Add("Parks & Recreation");
+            _set.Add("Public Safety");
+        }
+
+        public static IEnumerable<string> All()
+        {
+            foreach (var c in _set.Items()) yield return c;
+        }
     }
 }

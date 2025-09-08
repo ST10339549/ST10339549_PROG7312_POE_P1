@@ -11,7 +11,6 @@ namespace MunicipalServiceApp.Presentation
         private readonly IIssueService _issueService;
         private string _attachedPath = string.Empty;
 
-        // Designer-friendly constructor
         public ReportIssuesForm() : this(null!) { }
 
         public ReportIssuesForm(IIssueService issueService)
@@ -24,9 +23,17 @@ namespace MunicipalServiceApp.Presentation
 
         private void ReportIssuesForm_Load(object? sender, EventArgs e)
         {
+            cmbCategory.DataSource = null;
+
+            // Fill from the custom Categories.All() enumerator
             cmbCategory.Items.Clear();
-            cmbCategory.Items.AddRange(Domain.Categories.All);
-            if (cmbCategory.Items.Count > 0) cmbCategory.SelectedIndex = 0;
+            foreach (var c in Domain.Categories.All())
+                cmbCategory.Items.Add(c);
+
+            cmbCategory.DropDownStyle = ComboBoxStyle.DropDownList;
+
+            if (cmbCategory.Items.Count > 0)
+                cmbCategory.SelectedIndex = 0;
 
             lblStatus.Text = "Awaiting submission…";
             prgEngagement.Minimum = 0;
@@ -79,7 +86,7 @@ namespace MunicipalServiceApp.Presentation
             var token = result.Value ?? "(unavailable)";
             lblStatus.Text = $"Issue submitted. Tracking #: {token}";
 
-            // Optional convenience: copy token to clipboard.
+            // Copy token to clipboard.
             try { Clipboard.SetText(token); } catch { /* ignore clipboard errors */ }
 
             MessageBox.Show(
