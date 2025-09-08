@@ -12,6 +12,9 @@ namespace MunicipalServiceApp.Presentation
         private readonly IGeocodingService _geo;
         private string _attachedPath = string.Empty;
 
+        // prevents live progress updates from fighting the submit animation
+        private bool _isSubmitting = false;
+
         public ReportIssuesForm() : this(null!, null!) { }
 
         public ReportIssuesForm(IIssueService issueService, IGeocodingService geo)
@@ -22,18 +25,24 @@ namespace MunicipalServiceApp.Presentation
             InitializeComponent();
             Text = "Report Issues";
             StartPosition = FormStartPosition.CenterScreen;
+
+            // wire live-progress events right after InitializeComponent()
+            WireProgressEvents();
         }
 
         private void ReportIssuesForm_Load(object? sender, EventArgs e)
         {
             PopulateCategories();
 
-            lblStatus.Text = "Awaiting submission…";
             prgEngagement.Minimum = 0;
             prgEngagement.Maximum = 100;
             prgEngagement.Value = 0;
 
             lblAttachmentPath.Text = "No file selected";
+            lblStatus.Text = "Awaiting submission…";
+
+            // ensure initial progress reflects empty form
+            RefreshProgress();
         }
 
         private void PopulateCategories()
@@ -49,6 +58,45 @@ namespace MunicipalServiceApp.Presentation
                 cmbCategory.SelectedIndex = 0;
         }
 
+        private void WireProgressEvents()
+        {
+            // Update progress whenever the user types or selects anything
+            txtLocation.TextChanged += OnAnyInputChanged;
+            rtbDescription.TextChanged += OnAnyInputChanged;
+            cmbCategory.SelectedIndexChanged += OnAnyInputChanged;
+        }
+
+        private void OnAnyInputChanged(object? sender, EventArgs e) => RefreshProgress();
+
+        /// <summary>
+        /// Computes and applies the current progress % based on filled inputs.
+        /// </summary>
+        private void RefreshProgress()
+        {
+            if (_isSubmitting) return;
+
+            int p = 0;
+
+            // Weighting (adds to 100)
+            if (!string.IsNullOrWhiteSpace(txtLocation.Text)) p += 30;          // Location
+            if (cmbCategory.SelectedIndex >= 0) p += 20;                         // Category
+            if ((rtbDescription.Text?.Trim().Length ?? 0) >= 10) p += 30;        // Description
+            if (!string.IsNullOrEmpty(_attachedPath)) p += 20;                   // Attachment
+
+            p = Math.Max(0, Math.Min(100, p));
+            prgEngagement.Value = p;
+
+            // Helpful hint text
+            lblStatus.Text = p switch
+            {
+                < 30 => "Tip: Enter the location to get started.",
+                < 50 => "Tip: Choose a category.",
+                < 80 => "Tip: Add a short description (10+ characters).",
+                < 100 => "Optional: Attach a photo/doc to reach 100%.",
+                _ => "Ready to submit."
+            };
+        }
+
         private void btnAttach_Click(object? sender, EventArgs e)
         {
             using var dlg = new OpenFileDialog
@@ -61,13 +109,17 @@ namespace MunicipalServiceApp.Presentation
             {
                 _attachedPath = dlg.FileName;
                 lblAttachmentPath.Text = _attachedPath;
+                RefreshProgress();
             }
         }
 
         // Address validation (geocoding) happens BEFORE saving
         private async void btnSubmit_Click(object? sender, EventArgs e)
         {
-            prgEngagement.Value = 0;
+            _isSubmitting = true;
+
+            // Make sure the live % is reflected, then animate to 100 on submit
+            var startPct = prgEngagement.Value;
             lblStatus.Text = "Validating address…";
 
             var rawAddress = txtLocation.Text?.Trim() ?? string.Empty;
@@ -76,7 +128,8 @@ namespace MunicipalServiceApp.Presentation
             {
                 MessageBox.Show(addr.ErrorMessage, "Invalid Address",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                lblStatus.Text = "Awaiting submission…";
+                _isSubmitting = false;
+                RefreshProgress(); // show live progress again
                 txtLocation.Focus();
                 return;
             }
@@ -98,12 +151,13 @@ namespace MunicipalServiceApp.Presentation
             {
                 MessageBox.Show(result.ErrorMessage, "Validation Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                lblStatus.Text = "Awaiting submission…";
+                _isSubmitting = false;
+                RefreshProgress();
                 return;
             }
 
             lblStatus.Text = "Submitting…";
-            await AnimateProgressBarAsync(0, 100, 600);
+            await AnimateProgressBarAsync(startPct, 100, 600);
 
             var token = result.Value ?? "(unavailable)";
             lblStatus.Text = $"Issue submitted. Tracking #: {token}";
@@ -124,7 +178,9 @@ namespace MunicipalServiceApp.Presentation
             if (cmbCategory.Items.Count > 0) cmbCategory.SelectedIndex = 0;
             _attachedPath = string.Empty;
             lblAttachmentPath.Text = "No file selected";
-            prgEngagement.Value = 0;
+
+            _isSubmitting = false;
+            RefreshProgress();
             txtLocation.Focus();
         }
 
