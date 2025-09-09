@@ -171,7 +171,7 @@ namespace MunicipalServiceApp.Presentation
             // Location
             lblLocation = new Label
             {
-                Text = "Location (validated address)",
+                Text = "Location",
                 AutoSize = true,
                 Anchor = AnchorStyles.Left,
                 Margin = new Padding(0, 4, 12, 4)
