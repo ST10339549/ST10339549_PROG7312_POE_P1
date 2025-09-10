@@ -8,7 +8,6 @@ namespace MunicipalServiceApp.Presentation
 {
     public partial class ReportIssuesForm : Form
     {
-        // Reduce flicker on resize/scroll (optional, safe for WinForms)
         protected override CreateParams CreateParams
         {
             get
@@ -167,8 +166,6 @@ namespace MunicipalServiceApp.Presentation
             var issue = new Issue
             {
                 Location = addr.NormalizedAddress,
-                Latitude = addr.Latitude,
-                Longitude = addr.Longitude,
                 Category = cmbCategory.SelectedItem?.ToString() ?? string.Empty,
                 Description = rtbDescription.Text?.Trim() ?? string.Empty,
                 AttachmentPath = _attachedPath

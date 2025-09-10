@@ -1,19 +1,26 @@
-﻿namespace MunicipalServiceApp.Presentation
+﻿using System;
+using System.Drawing;
+using System.Windows.Forms;
+
+namespace MunicipalServiceApp.Presentation
 {
     partial class MyReportedIssuesForm
     {
         private System.ComponentModel.IContainer? components = null;
 
+        // Header
         private Panel header = null!;
         private Label lblTitle = null!;
         private Label lblSub = null!;
-        private Panel body = null!;
-        private Panel card = null!;
-        private Label lblHeading = null!;
-        private ListView lvReports = null!;
-        private Button btnBack = null!;
+
+        // Body
+        private TableLayoutPanel root = null!;
+        private GroupBox grp = null!;
+        private DataGridView grid = null!;
+        private FlowLayoutPanel actions = null!;
         private Button btnRefresh = null!;
         private Button btnOpenAttachment = null!;
+        private Button btnBack = null!;
 
         protected override void Dispose(bool disposing)
         {
@@ -25,14 +32,15 @@
         {
             components = new System.ComponentModel.Container();
 
-            // Header
+            // ===== Header =====
             header = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 100,
+                Height = 96,
                 BackColor = Color.FromArgb(92, 71, 173),
-                Padding = new Padding(24, 16, 24, 18)
+                Padding = new Padding(24, 16, 24, 16)
             };
+
             lblTitle = new Label
             {
                 Text = "Municipal Services",
@@ -41,6 +49,7 @@
                 Font = new Font("Segoe UI Semibold", 22f),
                 Margin = new Padding(0, 0, 0, 2)
             };
+
             lblSub = new Label
             {
                 Text = "Report issues • Discover local events • Track service requests",
@@ -49,111 +58,106 @@
                 Font = new Font("Segoe UI", 11f),
                 Margin = new Padding(0)
             };
+
             var headerStack = new FlowLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 FlowDirection = FlowDirection.TopDown,
                 WrapContents = false,
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink
+                BackColor = Color.Transparent
             };
             headerStack.Controls.Add(lblTitle);
             headerStack.Controls.Add(lblSub);
             header.Controls.Add(headerStack);
 
-            // Body
-            body = new Panel
+            // ===== Root layout (fills screen) =====
+            root = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 BackColor = Color.FromArgb(247, 248, 250),
-                AutoScroll = true
-            };
-
-            // Card
-            card = new Panel
-            {
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                BackColor = Color.White,
-                BorderStyle = BorderStyle.FixedSingle,
+                ColumnCount = 1,
+                RowCount = 2,
                 Padding = new Padding(24),
-                MinimumSize = new Size(900, 0)
             };
-            body.Controls.Add(card);
+            root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));   // grid
+            root.RowStyles.Add(new RowStyle(SizeType.AutoSize));        // buttons
 
-            // Heading
-            lblHeading = new Label
+            // ===== Group “card” =====
+            grp = new GroupBox
             {
+                Dock = DockStyle.Fill,
                 Text = "My Submitted Reports",
-                Font = new Font("Segoe UI Semibold", 14f),
-                AutoSize = true,
-                Margin = new Padding(0, 0, 0, 12)
+                Font = new Font("Segoe UI", 10f),
+                Padding = new Padding(12)
             };
 
-            // ListView
-            lvReports = new ListView
+            // ===== DataGrid =====
+            grid = new DataGridView
             {
-                View = View.Details,
-                FullRowSelect = true,
-                HideSelection = false,
-                GridLines = false,
-                Dock = DockStyle.Top,
-                Height = 360
+                Dock = DockStyle.Fill,
+                ReadOnly = true,
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                AllowUserToResizeRows = false,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                MultiSelect = false,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                RowHeadersVisible = false,
+                BackgroundColor = Color.White,
+                BorderStyle = BorderStyle.FixedSingle
             };
-            lvReports.Columns.Add("Tracking #", 160);
-            lvReports.Columns.Add("Location", 220);
-            lvReports.Columns.Add("Category", 120);
-            lvReports.Columns.Add("Description", 260);
-            lvReports.Columns.Add("Attachment", 120);
-            lvReports.Columns.Add("Created", 140);
+            grp.Controls.Add(grid);
 
-            lvReports.DoubleClick += lvReports_DoubleClick;
-
-            // Buttons
-            var btnRow = new FlowLayoutPanel
+            // ===== Actions (bottom-right) =====
+            actions = new FlowLayoutPanel
             {
-                Dock = DockStyle.Top,
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Dock = DockStyle.Fill,
                 FlowDirection = FlowDirection.RightToLeft,
-                Margin = new Padding(0, 8, 0, 0),
-                WrapContents = false
+                AutoSize = true
             };
 
-            btnBack = new Button { Text = "Back to Main Menu", Width = 160, Height = 36, Margin = new Padding(6, 0, 0, 0) };
+            btnBack = new Button
+            {
+                Text = "Back to Main Menu",
+                Width = 160,
+                Height = 34,
+                Margin = new Padding(8, 8, 0, 0)
+            };
             btnBack.Click += btnBack_Click;
 
-            btnOpenAttachment = new Button { Text = "Open Attachment", Width = 150, Height = 36, Margin = new Padding(6, 0, 0, 0) };
+            btnOpenAttachment = new Button
+            {
+                Text = "Open Attachment",
+                Width = 140,
+                Height = 34,
+                Margin = new Padding(8, 8, 0, 0)
+            };
             btnOpenAttachment.Click += btnOpenAttachment_Click;
 
-            btnRefresh = new Button { Text = "Refresh", Width = 100, Height = 36, Margin = new Padding(6, 0, 0, 0) };
+            btnRefresh = new Button
+            {
+                Text = "Refresh",
+                Width = 100,
+                Height = 34,
+                Margin = new Padding(8, 8, 0, 0)
+            };
             btnRefresh.Click += btnRefresh_Click;
 
-            btnRow.Controls.Add(btnBack);
-            btnRow.Controls.Add(btnOpenAttachment);
-            btnRow.Controls.Add(btnRefresh);
+            actions.Controls.Add(btnBack);
+            actions.Controls.Add(btnOpenAttachment);
+            actions.Controls.Add(btnRefresh);
 
-            // Add to card
-            card.Controls.Add(btnRow);
-            card.Controls.Add(lvReports);
-            card.Controls.Add(lblHeading);
+            // Compose
+            root.Controls.Add(grp, 0, 0);
+            root.Controls.Add(actions, 0, 1);
 
-            // Center card horizontally
-            body.Resize += (_, __) =>
-            {
-                var x = (body.ClientSize.Width - card.Width) / 2;
-                if (x < 0) x = 0;
-                card.Left = x;
-                card.Top = 16;
-            };
-
-            // Form
+            // ===== Form =====
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            BackColor = Color.FromArgb(247, 248, 250);
-            MinimumSize = new Size(1100, 650);
+            BackColor = Color.White;
+            Text = "My Submitted Reports";
 
-            Controls.Add(body);
+            Controls.Add(root);
             Controls.Add(header);
 
             Load += MyReportedIssuesForm_Load;
