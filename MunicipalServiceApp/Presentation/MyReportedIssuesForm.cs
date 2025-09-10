@@ -1,5 +1,8 @@
-﻿using MunicipalServiceApp.Application.Abstractions;
+﻿#nullable enable
+
+using MunicipalServiceApp.Application.Abstractions;
 using MunicipalServiceApp.Domain;
+using MunicipalServiceApp.Domain.DataStructures;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -25,7 +28,6 @@ namespace MunicipalServiceApp.Presentation
 
         private void MyReportedIssuesForm_Load(object? sender, EventArgs e)
         {
-            // Build columns once
             if (grid.Columns.Count == 0)
             {
                 grid.Columns.Clear();
@@ -75,8 +77,13 @@ namespace MunicipalServiceApp.Presentation
 
         private void ReloadGrid()
         {
-            var items = _issueService.All().ToList();
-            grid.DataSource = items;
+            var issues = _issueService.All();
+            var issueList = new SinglyLinkedList<Issue>();
+            foreach (var issue in issues)
+            {
+                issueList.AddLast(issue);
+            }
+            grid.DataSource = issueList.ToList();
 
             ConfigureColumnWeights();
             if (grid.Rows.Count > 0) grid.ClearSelection();
@@ -109,8 +116,6 @@ namespace MunicipalServiceApp.Presentation
 
         private void btnBack_Click(object? sender, EventArgs e) => Close();
 
-        // ===== Layout helpers =====
-
         private void ApplyLayoutFixes()
         {
             FixHeaderHeight();
@@ -123,21 +128,18 @@ namespace MunicipalServiceApp.Presentation
             if (header == null || lblSub == null) return;
 
             var desiredHeight = lblSub.Bottom + 16;
-                header.Height = desiredHeight;
+            header.Height = desiredHeight;
         }
 
         private void ConfigureGridLook()
         {
-            // Header visuals and spacing
             grid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             grid.ColumnHeadersHeight = 36;
             grid.ColumnHeadersDefaultCellStyle.Padding = new Padding(6, 6, 6, 6);
 
-            // Sizing
             grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             grid.AllowUserToResizeColumns = true;
 
-            // Content behavior
             grid.DefaultCellStyle.WrapMode = DataGridViewTriState.False;
             grid.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None;
 
