@@ -13,6 +13,12 @@ A simple, modern Windows Forms application for reporting municipal issues with v
 - Custom data structures (no built-in generic collections) powering repositories and storage.
 - Layered architecture (Domain, Application, Infrastructure, Presentation) using interfaces and dependency injection in Program.cs.
 
+## 🎥 YouTube Demo
+
+Here is a link to the Demo of the application done on YouTube: https://youtu.be/8cFkDTEG0O8.
+
+Note: This video is set to unlisted so anyone with the link can view the demo. 
+
 ## 🧠 Architecture Overview
 
 - **Domain** – Entities and core rules (Issue, Categories).
