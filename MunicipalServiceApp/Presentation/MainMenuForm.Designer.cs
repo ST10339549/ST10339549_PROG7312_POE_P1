@@ -130,14 +130,37 @@ namespace MunicipalServiceApp.Presentation
                 btn.FlatAppearance.BorderSize = 0;
                 btn.Click += onClick;
 
+                Button btnMyReports = null;
+                if (title == "Report Issues")
+                {
+                    btnMyReports = new Button
+                    {
+                        Text = "My Reports",
+                        Width = 110,
+                        Height = 34,
+                        Left = btn.Right + 8,
+                        Top = btn.Top,
+                        FlatStyle = FlatStyle.Flat,
+                        BackColor = btn.BackColor,
+                        ForeColor = btn.ForeColor,
+                        Enabled = btn.Enabled
+                    };
+                    btnMyReports.FlatAppearance.BorderSize = 0;
+                    btnMyReports.Click += btnMyReports_Click;
+                }
+
                 card.Controls.Add(pic);
                 card.Controls.Add(lblH);
                 card.Controls.Add(lblB);
                 card.Controls.Add(btn);
+                if (btnMyReports != null)
+                    card.Controls.Add(btnMyReports);
 
                 // rounded corners
                 UiKit.Round(card, 16);
                 UiKit.Round(btn, 18);
+                if (btnMyReports != null)
+                    UiKit.Round(btnMyReports, 18);
 
                 return card;
             }

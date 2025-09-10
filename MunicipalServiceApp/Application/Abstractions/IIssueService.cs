@@ -14,5 +14,7 @@ namespace MunicipalServiceApp.Application.Abstractions
         /// Validates and stores an Issue; returns a tracking number on success.
         /// </summary>
         OperationResult<string> CreateIssue(Issue issue);
+
+        IEnumerable<Issue> All();
     }
 }

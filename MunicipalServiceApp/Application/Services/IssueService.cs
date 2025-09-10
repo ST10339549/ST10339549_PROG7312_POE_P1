@@ -47,6 +47,8 @@ namespace MunicipalServiceApp.Application.Services
                     return true;
             return false;
         }
+
+        public IEnumerable<Issue> All() => _repo.All();
     }
 
     internal static class TrackingToken

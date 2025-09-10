@@ -34,6 +34,14 @@ namespace MunicipalServiceApp.Presentation
             Show();
         }
 
+        private void btnMyReports_Click(object? sender, EventArgs e)
+        {
+            using var frm = new MyReportedIssuesForm(_issueService);
+            Hide();
+            frm.ShowDialog(this);
+            Show();
+        }
+
         private void btnLocalEvents_Click(object? sender, EventArgs e)
         {
             // Disabled in Part 1
