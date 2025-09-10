@@ -1,6 +1,11 @@
-﻿using MunicipalServiceApp.Application.Abstractions;
+﻿#nullable enable
+
+using MunicipalServiceApp.Application.Abstractions;
 using MunicipalServiceApp.Domain;
+using MunicipalServiceApp.Domain.DataStructures;
 using System;
+using System.Drawing;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -13,16 +18,21 @@ namespace MunicipalServiceApp.Presentation
             get
             {
                 var cp = base.CreateParams;
-                cp.ExStyle |= 0x02000000; // WS_EX_COMPOSITED
+                cp.ExStyle |= 0x02000000;
                 return cp;
             }
         }
         private readonly IIssueService _issueService;
         private readonly IGeocodingService _geo;
         private string _attachedPath = string.Empty;
+        private readonly SinglyLinkedList<Attachment> _attachmentList = new SinglyLinkedList<Attachment>();
 
-        // prevents live progress updates from fighting the submit animation
         private bool _isSubmitting = false;
+
+        private bool _isAddressValid = false;
+
+        private readonly System.Windows.Forms.Timer _addressTypingTimer;
+        private const int TypingDelayMs = 1200;
 
         public ReportIssuesForm() : this(null!, null!) { }
 
@@ -35,16 +45,18 @@ namespace MunicipalServiceApp.Presentation
             Text = "Report Issues";
             StartPosition = FormStartPosition.CenterScreen;
 
-            // Open maximized but allow resize/move when restored
+            _addressTypingTimer = new System.Windows.Forms.Timer
+            {
+                Interval = TypingDelayMs
+            };
+
             FormBorderStyle = FormBorderStyle.Sizable;
             MinimizeBox = MaximizeBox = true;
             MinimumSize = new System.Drawing.Size(1000, 700);
 
-            // double-buffering
             SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint, true);
             UpdateStyles();
 
-            // Maximize on first show (Designer-safe), then keep card centered on resize
             Shown += (_, __) =>
             {
                 if (!DesignMode)
@@ -54,23 +66,31 @@ namespace MunicipalServiceApp.Presentation
             };
             SizeChanged += (_, __) => CenterCard();
 
-            // wire live-progress events right after InitializeComponent()
             WireProgressEvents();
+            SetupTypingTimer();
+        }
+
+        private void SetupTypingTimer()
+        {
+            _addressTypingTimer.Tick += async (s, e) =>
+            {
+                _addressTypingTimer.Stop();
+                await ValidateAddress(txtLocation.Text.Trim());
+            };
         }
 
         private void ReportIssuesForm_Load(object? sender, EventArgs e)
         {
-            PopulateCategories();
-
             prgEngagement.Minimum = 0;
             prgEngagement.Maximum = 100;
             prgEngagement.Value = 0;
-
             lblAttachmentPath.Text = "No file selected";
             lblStatus.Text = "Awaiting submission…";
 
-            // ensure initial progress reflects empty form
+            _isAddressValid = false;
             RefreshProgress();
+
+            PopulateCategories();
         }
 
         private void PopulateCategories()
@@ -82,14 +102,18 @@ namespace MunicipalServiceApp.Presentation
                 cmbCategory.Items.Add(c);
 
             cmbCategory.DropDownStyle = ComboBoxStyle.DropDownList;
-            if (cmbCategory.Items.Count > 0)
-                cmbCategory.SelectedIndex = 0;
         }
 
         private void WireProgressEvents()
         {
-            // Update progress whenever the user types or selects anything
-            txtLocation.TextChanged += OnAnyInputChanged;
+            txtLocation.TextChanged += (s, e) =>
+            {
+                _isAddressValid = false;
+                RefreshProgress();
+                _addressTypingTimer.Stop();
+                _addressTypingTimer.Start();
+            };
+
             rtbDescription.TextChanged += OnAnyInputChanged;
             cmbCategory.SelectedIndexChanged += OnAnyInputChanged;
         }
@@ -105,25 +129,51 @@ namespace MunicipalServiceApp.Presentation
 
             int p = 0;
 
-            // Weighting (adds to 100)
-            if (!string.IsNullOrWhiteSpace(txtLocation.Text)) p += 30;          // Location
-            if (cmbCategory.SelectedIndex >= 0) p += 20;                         // Category
-            if ((rtbDescription.Text?.Trim().Length ?? 0) >= 10) p += 30;        // Description
-            if (!string.IsNullOrEmpty(_attachedPath)) p += 20;                   // Attachment
+            if (_isAddressValid)
+            {
+                p += 30; // 30% for a valid address
+                lblStatus.Text = "Address validated successfully.";
+                lblStatus.ForeColor = Color.Green;
+            }
+            else
+            {
+                lblStatus.Text = "Tip: Enter a valid address.";
+                lblStatus.ForeColor = Color.Red;
+            }
+
+            // Category progress
+            if (cmbCategory.SelectedIndex >= 0)
+            {
+                p += 20;
+            }
+
+            // Description progress based on character count
+            if ((rtbDescription.Text?.Trim().Length ?? 0) >= 10)
+            {
+                p += 30;
+            }
+
+            // Attachment progress
+            if (!string.IsNullOrEmpty(_attachedPath))
+            {
+                p += 20;
+            }
 
             p = Math.Max(0, Math.Min(100, p));
             prgEngagement.Value = p;
-
-            // Helpful hint text
-            lblStatus.Text = p switch
-            {
-                < 30 => "Tip: Enter the location to get started.",
-                < 50 => "Tip: Choose a category.",
-                < 80 => "Tip: Add a short description (10+ characters).",
-                < 100 => "Optional: Attach a photo/doc to reach 100%.",
-                _ => "Ready to submit."
-            };
         }
+
+        private async Task ValidateAddress(string rawAddress)
+        {
+            lblStatus.Text = "Validating address...";
+            lblStatus.ForeColor = Color.DarkOrange;
+
+            var addr = await _geo.ValidateAsync(rawAddress);
+            _isAddressValid = addr.Success;
+
+            RefreshProgress();
+        }
+
 
         private void btnAttach_Click(object? sender, EventArgs e)
         {
@@ -141,12 +191,10 @@ namespace MunicipalServiceApp.Presentation
             }
         }
 
-        // Address validation (geocoding) happens BEFORE saving
         private async void btnSubmit_Click(object? sender, EventArgs e)
         {
             _isSubmitting = true;
 
-            // Make sure the live % is reflected, then animate to 100 on submit
             var startPct = prgEngagement.Value;
             lblStatus.Text = "Validating address…";
 
@@ -157,12 +205,11 @@ namespace MunicipalServiceApp.Presentation
                 MessageBox.Show(addr.ErrorMessage, "Invalid Address",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 _isSubmitting = false;
-                RefreshProgress(); // show live progress again
+                RefreshProgress();
                 txtLocation.Focus();
                 return;
             }
 
-            // Build the issue with normalized address + coords
             var issue = new Issue
             {
                 Location = addr.NormalizedAddress,
@@ -198,7 +245,6 @@ namespace MunicipalServiceApp.Presentation
                 MessageBoxIcon.Information
             );
 
-            // Reset inputs for the next report
             txtLocation.Clear();
             rtbDescription.Clear();
             if (cmbCategory.Items.Count > 0) cmbCategory.SelectedIndex = 0;
@@ -225,16 +271,13 @@ namespace MunicipalServiceApp.Presentation
 
         private void btnBack_Click(object? sender, EventArgs e) => Close();
 
-        // Helper to keep the card centered in the body panel
         private void CenterCard()
         {
             if (body == null || pnlCard == null) return;
 
-            // center horizontally within the scrollable body
             var x = Math.Max(0, (body.ClientSize.Width - pnlCard.Width) / 2);
             pnlCard.Left = x;
 
-            // keep a comfortable margin from the top of the body area
             pnlCard.Top = 16;
         }
     }
