@@ -70,8 +70,9 @@ namespace MunicipalServiceApp.Presentation
             // ===== Centered content area =====
             pnlMenu = new Panel
             {
-                Width = 860,
-                Height = 260,
+                Width = 820,
+                Height = 300,
+                Anchor = AnchorStyles.Top, // not Dock; allows manual centering
                 BackColor = Color.Transparent
             };
             Controls.Add(pnlMenu);
@@ -203,17 +204,7 @@ namespace MunicipalServiceApp.Presentation
             Text = "Main Menu";
             MinimumSize = new Size(900, 560);
 
-            // center the menu panel
-            Resize += (_, __) =>
-            {
-                pnlMenu.Left = Math.Max(0, (ClientSize.Width - pnlMenu.Width) / 2);
-                pnlMenu.Top = Math.Max(header.Bottom + 16, (ClientSize.Height - pnlMenu.Height) / 2);
-            };
-            Shown += (_, __) =>
-            {
-                pnlMenu.Left = Math.Max(0, (ClientSize.Width - pnlMenu.Width) / 2);
-                pnlMenu.Top = Math.Max(header.Bottom + 16, (ClientSize.Height - pnlMenu.Height) / 2);
-            };
+            // ... centering now handled in MainMenuForm.cs CenterMenu()
         }
 
         private static class UiKit
