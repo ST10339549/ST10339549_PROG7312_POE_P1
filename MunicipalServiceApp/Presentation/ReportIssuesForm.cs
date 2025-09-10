@@ -120,47 +120,64 @@ namespace MunicipalServiceApp.Presentation
 
         private void OnAnyInputChanged(object? sender, EventArgs e) => RefreshProgress();
 
-        /// <summary>
-        /// Computes and applies the current progress % based on filled inputs.
-        /// </summary>
         private void RefreshProgress()
         {
             if (_isSubmitting) return;
 
             int p = 0;
+            string statusTip = "Awaiting submission…";
+            Color statusColor = Color.Blue;
 
-            if (_isAddressValid)
+            if (string.IsNullOrEmpty(txtLocation.Text.Trim()))
             {
-                p += 30; // 30% for a valid address
-                lblStatus.Text = "Address validated successfully.";
-                lblStatus.ForeColor = Color.Green;
+                statusTip = "Tip: Enter a location.";
+                statusColor = Color.Blue;
+            }
+            else if (!_isAddressValid)
+            {
+                statusTip = "Tip: Enter a valid address.";
+                statusColor = Color.Red;
             }
             else
             {
-                lblStatus.Text = "Tip: Enter a valid address.";
-                lblStatus.ForeColor = Color.Red;
+                p += 30;
+                statusTip = "Address validated successfully.";
+                statusColor = Color.Green;
             }
 
-            // Category progress
-            if (cmbCategory.SelectedIndex >= 0)
+            if (p >= 30 && cmbCategory.SelectedIndex < 0)
+            {
+                statusTip = "Tip: Select a category.";
+                statusColor = Color.Blue;
+            }
+            else if (cmbCategory.SelectedIndex >= 0)
             {
                 p += 20;
             }
 
-            // Description progress based on character count
-            if ((rtbDescription.Text?.Trim().Length ?? 0) >= 10)
+            if (p >= 50 && (rtbDescription.Text?.Trim().Length ?? 0) < 10)
+            {
+                statusTip = "Tip: Enter a description (min 10 characters).";
+                statusColor = Color.Blue;
+            }
+            else if ((rtbDescription.Text?.Trim().Length ?? 0) >= 10)
             {
                 p += 30;
             }
 
-            // Attachment progress
-            if (!string.IsNullOrEmpty(_attachedPath))
+            if (p >= 80 && string.IsNullOrEmpty(_attachedPath))
+            {
+                statusTip = "Tip: Attach a photo or document.";
+                statusColor = Color.Blue;
+            }
+            else if (!string.IsNullOrEmpty(_attachedPath))
             {
                 p += 20;
             }
 
-            p = Math.Max(0, Math.Min(100, p));
-            prgEngagement.Value = p;
+            lblStatus.Text = statusTip;
+            lblStatus.ForeColor = statusColor;
+            prgEngagement.Value = Math.Max(0, Math.Min(100, p));
         }
 
         private async Task ValidateAddress(string rawAddress)
@@ -173,7 +190,6 @@ namespace MunicipalServiceApp.Presentation
 
             RefreshProgress();
         }
-
 
         private void btnAttach_Click(object? sender, EventArgs e)
         {
@@ -235,7 +251,7 @@ namespace MunicipalServiceApp.Presentation
             var token = result.Value ?? "(unavailable)";
             lblStatus.Text = $"Issue submitted. Tracking #: {token}";
 
-            try { Clipboard.SetText(token); } catch { /* ignore clipboard errors */ }
+            try { Clipboard.SetText(token); } catch { }
 
             MessageBox.Show(
                 $"Your report has been logged successfully.\n\nTracking #: {token}\n\n" +
@@ -247,11 +263,12 @@ namespace MunicipalServiceApp.Presentation
 
             txtLocation.Clear();
             rtbDescription.Clear();
-            if (cmbCategory.Items.Count > 0) cmbCategory.SelectedIndex = 0;
+            cmbCategory.SelectedIndex = -1;
             _attachedPath = string.Empty;
             lblAttachmentPath.Text = "No file selected";
-
+            _isAddressValid = false;
             _isSubmitting = false;
+
             RefreshProgress();
             txtLocation.Focus();
         }
