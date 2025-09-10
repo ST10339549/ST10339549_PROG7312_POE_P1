@@ -10,8 +10,6 @@ namespace MunicipalServiceApp.Domain
     {
         public string TrackingNumber { get; set; } = string.Empty;
         public string Location { get; set; } = string.Empty;
-        public double Latitude { get; set; }
-        public double Longitude { get; set; }
         public string Category { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public string AttachmentPath { get; set; } = string.Empty;
