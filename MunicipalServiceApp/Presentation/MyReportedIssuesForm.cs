@@ -19,27 +19,67 @@ namespace MunicipalServiceApp.Presentation
 
             WindowState = FormWindowState.Maximized;
             StartPosition = FormStartPosition.CenterScreen;
+
+            ApplyLayoutFixes();
         }
 
         private void MyReportedIssuesForm_Load(object? sender, EventArgs e)
         {
+            // Build columns once
             if (grid.Columns.Count == 0)
             {
                 grid.Columns.Clear();
-                grid.Columns.Add(new DataGridViewTextBoxColumn { Name = "Tracking", HeaderText = "Tracking #", DataPropertyName = "TrackingNumber", FillWeight = 18 });
-                grid.Columns.Add(new DataGridViewTextBoxColumn { Name = "Location", HeaderText = "Location", DataPropertyName = "Location", FillWeight = 26 });
-                grid.Columns.Add(new DataGridViewTextBoxColumn { Name = "Category", HeaderText = "Category", DataPropertyName = "Category", FillWeight = 14 });
-                grid.Columns.Add(new DataGridViewTextBoxColumn { Name = "Description", HeaderText = "Description", DataPropertyName = "Description", FillWeight = 30 });
-                grid.Columns.Add(new DataGridViewTextBoxColumn { Name = "Attachment", HeaderText = "Attachment", DataPropertyName = "AttachmentPath", FillWeight = 12 });
+                grid.Columns.Add(new DataGridViewTextBoxColumn
+                {
+                    Name = "Tracking",
+                    HeaderText = "Tracking #",
+                    DataPropertyName = "TrackingNumber",
+                    FillWeight = 18
+                });
+                grid.Columns.Add(new DataGridViewTextBoxColumn
+                {
+                    Name = "Location",
+                    HeaderText = "Location",
+                    DataPropertyName = "Location",
+                    FillWeight = 26
+                });
+                grid.Columns.Add(new DataGridViewTextBoxColumn
+                {
+                    Name = "Category",
+                    HeaderText = "Category",
+                    DataPropertyName = "Category",
+                    FillWeight = 14
+                });
+                grid.Columns.Add(new DataGridViewTextBoxColumn
+                {
+                    Name = "Description",
+                    HeaderText = "Description",
+                    DataPropertyName = "Description",
+                    FillWeight = 30
+                });
+                grid.Columns.Add(new DataGridViewTextBoxColumn
+                {
+                    Name = "Attachment",
+                    HeaderText = "Attachment",
+                    DataPropertyName = "AttachmentPath",
+                    FillWeight = 12
+                });
             }
 
+            ConfigureGridLook();
             ReloadGrid();
+
+            Shown += (_, __) => ApplyLayoutFixes();
+            SizeChanged += (_, __) => ApplyLayoutFixes();
         }
 
         private void ReloadGrid()
         {
             var items = _issueService.All().ToList();
             grid.DataSource = items;
+
+            ConfigureColumnWeights();
+            if (grid.Rows.Count > 0) grid.ClearSelection();
         }
 
         private void btnRefresh_Click(object? sender, EventArgs e) => ReloadGrid();
@@ -68,5 +108,55 @@ namespace MunicipalServiceApp.Presentation
         }
 
         private void btnBack_Click(object? sender, EventArgs e) => Close();
+
+        // ===== Layout helpers =====
+
+        private void ApplyLayoutFixes()
+        {
+            FixHeaderHeight();
+            header?.PerformLayout();
+            this?.PerformLayout();
+        }
+
+        private void FixHeaderHeight()
+        {
+            if (header == null || lblSub == null) return;
+
+            var desiredHeight = lblSub.Bottom + 16;
+                header.Height = desiredHeight;
+        }
+
+        private void ConfigureGridLook()
+        {
+            // Header visuals and spacing
+            grid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            grid.ColumnHeadersHeight = 36;
+            grid.ColumnHeadersDefaultCellStyle.Padding = new Padding(6, 6, 6, 6);
+
+            // Sizing
+            grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            grid.AllowUserToResizeColumns = true;
+
+            // Content behavior
+            grid.DefaultCellStyle.WrapMode = DataGridViewTriState.False;
+            grid.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None;
+
+            ConfigureColumnWeights();
+        }
+
+        private void ConfigureColumnWeights()
+        {
+            void weight(string name, float w)
+            {
+                if (grid.Columns.Contains(name))
+                    grid.Columns[name].FillWeight = w;
+            }
+
+            weight("Tracking", 110);
+            weight("Location", 220);
+            weight("Category", 140);
+            weight("Description", 360);
+            weight("Attachment", 170);
+        }
     }
 }
