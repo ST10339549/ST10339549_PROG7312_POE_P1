@@ -23,6 +23,44 @@ namespace MunicipalServiceApp.Presentation
             InitializeComponent();
             StartPosition = FormStartPosition.CenterScreen;
             Text = "My Submitted Reports";
+
+            // Window chrome
+            FormBorderStyle = FormBorderStyle.Sizable;
+            MinimizeBox = MaximizeBox = true;
+            MinimumSize = new Size(1000, 700);
+
+            // Smooth painting
+            SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint, true);
+            UpdateStyles();
+
+            // Open maximized but keep responsive
+            Shown += (_, __) =>
+            {
+                if (!DesignMode)
+                    WindowState = FormWindowState.Maximized;
+
+                CenterCard();
+            };
+            SizeChanged += (_, __) => CenterCard();
+        }
+
+        protected override CreateParams CreateParams
+        {
+            get
+            {
+                var cp = base.CreateParams;
+                cp.ExStyle |= 0x02000000; // WS_EX_COMPOSITED
+                return cp;
+            }
+        }
+
+        private void CenterCard()
+        {
+            if (body == null || card == null) return;
+
+            var x = Math.Max(0, (body.ClientSize.Width - card.Width) / 2);
+            card.Left = x;
+            card.Top  = 16;
         }
 
         private void MyReportedIssuesForm_Load(object? sender, EventArgs e)

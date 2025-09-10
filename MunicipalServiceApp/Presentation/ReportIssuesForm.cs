@@ -8,6 +8,16 @@ namespace MunicipalServiceApp.Presentation
 {
     public partial class ReportIssuesForm : Form
     {
+        // Reduce flicker on resize/scroll (optional, safe for WinForms)
+        protected override CreateParams CreateParams
+        {
+            get
+            {
+                var cp = base.CreateParams;
+                cp.ExStyle |= 0x02000000; // WS_EX_COMPOSITED
+                return cp;
+            }
+        }
         private readonly IIssueService _issueService;
         private readonly IGeocodingService _geo;
         private string _attachedPath = string.Empty;
@@ -25,6 +35,25 @@ namespace MunicipalServiceApp.Presentation
             InitializeComponent();
             Text = "Report Issues";
             StartPosition = FormStartPosition.CenterScreen;
+
+            // Open maximized but allow resize/move when restored
+            FormBorderStyle = FormBorderStyle.Sizable;
+            MinimizeBox = MaximizeBox = true;
+            MinimumSize = new System.Drawing.Size(1000, 700);
+
+            // double-buffering
+            SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint, true);
+            UpdateStyles();
+
+            // Maximize on first show (Designer-safe), then keep card centered on resize
+            Shown += (_, __) =>
+            {
+                if (!DesignMode)
+                    WindowState = FormWindowState.Maximized;
+
+                CenterCard();
+            };
+            SizeChanged += (_, __) => CenterCard();
 
             // wire live-progress events right after InitializeComponent()
             WireProgressEvents();
@@ -198,5 +227,18 @@ namespace MunicipalServiceApp.Presentation
         }
 
         private void btnBack_Click(object? sender, EventArgs e) => Close();
+
+        // Helper to keep the card centered in the body panel
+        private void CenterCard()
+        {
+            if (body == null || pnlCard == null) return;
+
+            // center horizontally within the scrollable body
+            var x = Math.Max(0, (body.ClientSize.Width - pnlCard.Width) / 2);
+            pnlCard.Left = x;
+
+            // keep a comfortable margin from the top of the body area
+            pnlCard.Top = 16;
+        }
     }
 }
